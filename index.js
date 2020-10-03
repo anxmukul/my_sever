@@ -8,10 +8,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const port = process.env.port || 5000
 var con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: process.env.db_password,
-    database: "mukul"
+    host: "sql12.freemysqlhosting.net",
+    user: "sql12368611",
+    password: "jLvgXstf4Y",
+    database: "sql12368611",
+    port: 3306
 });
 
 app.get('/', (req, res) => {
@@ -141,7 +142,7 @@ app.listen(port, () => {
 })
 con.connect(function(err){
     if(err){
-        console.log("Error in connection with database");
+        console.log("Error in connection with database", err);
     }
     else{
         console.log("Conection Established");
