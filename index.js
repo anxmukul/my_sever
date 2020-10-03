@@ -6,11 +6,11 @@ var mysql = require('mysql');
 const app = express()
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-const port = 5000
+const port = process.env.port || 5000
 var con = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "amelia053",
+    password: process.env.db_password,
     database: "mukul"
 });
 
@@ -21,8 +21,6 @@ app.get('/', (req, res) => {
 
 app.get('/todo', (req, res) => {
     var sql = 'select * from todo';
-    //res.database.con.query(sql, myFunction);
-    //res.send("<h1>Here are your all ToDo's</h1>");
     con.query(sql, (err, data) => {             // Sending responce to browser after from db.
         if(err){
             console.log("Error in reading from DB");
@@ -57,10 +55,7 @@ app.post('/todo', (req, res)=>{
         }
     })
 })
-// app.get('/blog/:name', (req, res) => {
-//     console.log('path param', req.params);
-//     res.json({key: 'Welcome to home!'})     //.json convert to json and send the json;
-//   })
+
 app.put('/todo/:name', (req, res) => {
     console.log('path param', req.params);
     console.log(req.body);
@@ -87,11 +82,9 @@ app.put('/todo/:name', (req, res) => {
             })
         }
     })
-   // res.send("Request Accepted");
 })
 app.patch('/todo/:name', (req, res) => {
   // console.log("Params ", req.params);
-   //res.send("Request accepted");
    var c = req.params.name;
    //console.log(c);
    var a = [];
@@ -129,10 +122,6 @@ app.patch('/todo/:name', (req, res) => {
        }
    })
 })
-// app.post('/blog', (req, res) => {
-//     console.log('path param', req.body);
-//     res.json({key: 'Welcome to home!'})
-//   })
 app.delete('/todo/:name', (req, res) => {
     var c = req.params.name;
     var sql = `delete from todo where todo_id = ${c}`;
