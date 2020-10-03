@@ -133,7 +133,20 @@ app.patch('/todo/:name', (req, res) => {
 //     console.log('path param', req.body);
 //     res.json({key: 'Welcome to home!'})
 //   })
-
+app.delete('/todo/:name', (req, res) => {
+    var c = req.params.name;
+    var sql = `delete from todo where todo_id = ${c}`;
+    //console.log(sql);
+    con.query(sql, (err, data)=>{
+        if(err){
+            console.log("Error in deleting", err);
+        }
+        else{
+            console.log("Deleted");
+            res.send("Deleted");
+        }
+    })
+})
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
