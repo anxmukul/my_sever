@@ -89,7 +89,46 @@ app.put('/todo/:name', (req, res) => {
     })
    // res.send("Request Accepted");
 })
-
+app.patch('/todo/:name', (req, res) => {
+  // console.log("Params ", req.params);
+   //res.send("Request accepted");
+   var c = req.params.name;
+   //console.log(c);
+   var a = [];
+   a = Object.keys(req.body);
+   //console.log(a);
+   var sql = "update todo set ";
+   for (let index = 0; index < a.length; index++) {
+       var u = req.body[`${a[index]}`];
+        //console.log(a[index]);
+       //console.log(u);
+       if(index==a.length-1){
+        sql+= ` ${a[index]} = '${u}' `
+       }
+       else{
+            sql+= ` ${a[index]} = '${u}', `
+       }
+    }
+    sql += `where todo_id = ${c}`;
+       console.log(sql);
+       con.query(sql, (err, data) => {
+           if(err){
+               console.log(err);
+           }
+           else{
+               console.log("Updated Successfully");
+           }
+       })
+   var sql_r = `select * from todo where todo_id = ${c}`;
+   con.query(sql_r, (err, data) => {
+       if(err){
+           console.log(err)
+       }
+       else{
+           res.json(data[0]);
+       }
+   })
+})
 // app.post('/blog', (req, res) => {
 //     console.log('path param', req.body);
 //     res.json({key: 'Welcome to home!'})
