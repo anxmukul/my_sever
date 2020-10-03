@@ -57,15 +57,43 @@ app.post('/todo', (req, res)=>{
         }
     })
 })
-app.get('/blog/:name', (req, res) => {
+// app.get('/blog/:name', (req, res) => {
+//     console.log('path param', req.params);
+//     res.json({key: 'Welcome to home!'})     //.json convert to json and send the json;
+//   })
+app.put('/todo/:name', (req, res) => {
     console.log('path param', req.params);
-    res.json({key: 'Welcome to home!'})     //.json convert to json and send the json;
-  })
+    console.log(req.body);
+    var c = req.params.name;
+    var t = req.body.time;
+    var m = req.body.message;
+    var sql = `update todo set time = '${t}', message = '${m}' where todo_id = ${c}`;
+    console.log(sql);
+    con.query(sql, (err, data) => {
+        if(err){
+            console.log("Error in updating", err);
+        }
+        else{
+            console.log("Updated successfully");
+            var sql_res = `select * from todo where todo_id = ${c}`;
+           // console.log(sql_res);
+            con.query(sql_res, (err, data) => {
+                if(err){
+                    console.log(err);
+                }
+                else{
+                    res.json(data[0]);
+                }
+            })
+        }
+    })
+   // res.send("Request Accepted");
+})
 
-app.post('/blog', (req, res) => {
-    console.log('path param', req.body);
-    res.json({key: 'Welcome to home!'})
-  })
+// app.post('/blog', (req, res) => {
+//     console.log('path param', req.body);
+//     res.json({key: 'Welcome to home!'})
+//   })
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
