@@ -44,13 +44,13 @@ app.post('/todo', (req, res)=>{
             console.log("Error in inserting into DB", err);
         }
         else{
-            var p = `select * from todo where message = '${v}'`
+            var p = `select * from todo ORDER BY todo_id DESC LIMIT 1`
             con.query(p, (err, data) => {
                 if(err){
                     console.log("Coundnot render fron DB", err);
                 }
                 else{
-                    res.json(data);
+                    res.json(data[0]);
                 }
             })
             console.log("Added to DB");
