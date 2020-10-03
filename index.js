@@ -6,7 +6,7 @@ var mysql = require('mysql');
 const app = express()
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-const port = process.env.port || 5000
+const port = process.env.PORT || 5000
 var con = mysql.createConnection({
     host: "sql12.freemysqlhosting.net",
     user: "sql12368611",
