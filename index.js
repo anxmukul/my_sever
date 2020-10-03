@@ -1,19 +1,81 @@
+const { json } = require('express');
 //http web server
 const express = require('express')
+var bodyParser = require('body-parser')     //Its a middlewere which take request and put in req.body
+var mysql = require('mysql');
 const app = express()
-const port = 3000
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+const port = 5000
+var con = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "amelia053",
+    database: "mukul"
+});
 
 app.get('/', (req, res) => {
     console.log('query paramtere', req.query);
-    res.send('Hello World!')
+    res.send('<h1>Hello There!</h1><p>Welcome to My ToDo</p>');           //.send send string;
 })
 
-
-app.get('/home', (req, res) => {
-  res.send('Welcome to home!')
+app.get('/todo', (req, res) => {
+    var sql = 'select * from todo';
+    //res.database.con.query(sql, myFunction);
+    //res.send("<h1>Here are your all ToDo's</h1>");
+    con.query(sql, (err, data) => {             // Sending responce to browser after from db.
+        if(err){
+            console.log("Error in reading from DB");
+        }
+        else{
+            console.log(JSON.stringify(data));
+            res.send(data);
+        }
+    });
 })
+app.post('/todo', (req, res)=>{
+    console.log(req.body);
+    var k = req.body.time;
+    var v = req.body.message;
+    //res.json({key: 'Welcome to home!'});
+    var post_sql = `insert into todo (time, message) values ('${k}', '${v}')`;
+    con.query(post_sql, (err, body) => {
+        if(err){
+            console.log("Error in inserting into DB", err);
+        }
+        else{
+            var p = `select * from todo where message = '${v}'`
+            con.query(p, (err, data) => {
+                if(err){
+                    console.log("Coundnot render fron DB", err);
+                }
+                else{
+                    res.json(data);
+                }
+            })
+            console.log("Added to DB");
+        }
+    })
+})
+app.get('/blog/:name', (req, res) => {
+    console.log('path param', req.params);
+    res.json({key: 'Welcome to home!'})     //.json convert to json and send the json;
+  })
 
+app.post('/blog', (req, res) => {
+    console.log('path param', req.body);
+    res.json({key: 'Welcome to home!'})
+  })
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
+con.connect(function(err){
+    if(err){
+        console.log("Error in connection with database");
+    }
+    else{
+        console.log("Conection Established");
+    }
+})
+console.log('done');
