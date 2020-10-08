@@ -1,9 +1,11 @@
 const { json } = require('express');
 //http web server
 const express = require('express')
+const cors = require('cors')
 var bodyParser = require('body-parser')     //Its a middlewere which take request and put in req.body
 var mysql = require('mysql');
 const app = express()
+app.use(cors())
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const port = process.env.PORT || 5000
