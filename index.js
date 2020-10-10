@@ -157,21 +157,7 @@ con.connect(function(err){
         console.log("Error in connection with database", err);
     }
     else{
-        con.query('select time, message from todo', function (err, data) {
-            for (let i = 0; i < data.length; i++) {
-                const element = data[i];
-                const qry = `insert into notes(title, message) VALUES('${element.time}', '${element.message}')`
-                client.query(qry, (err, res) => {
-                    if (err) {
-                        console.log('err for', err, qry)
-                    }
-                    else {
-                        console.log('inserted')
-                    }
-                })
-            }
-        })
-        console.log("Conection Established");
+        console.log('Connection established')
     }
 })
 console.log('done');
