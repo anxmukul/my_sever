@@ -1,9 +1,19 @@
-const { json } = require('express');
 //http web server
 const express = require('express')
 const cors = require('cors')
 var bodyParser = require('body-parser')     //Its a middlewere which take request and put in req.body
 var mysql = require('mysql');
+
+const { Client } = require('pg')
+const client = new Client({
+    host: 'ec2-54-160-161-214.compute-1.amazonaws.com',
+    user: 'odeeoirltmupwn',
+    password: '1479ce0b28b97770c371b7e2188e2718c304f621e8c1b3d8329545e9eb73faaa',
+    database: 'df0jr1cg8fujnk',
+    port: 5432
+})
+client.connect()
+
 const app = express()
 app.use(cors())
 app.use(bodyParser.json());
@@ -147,6 +157,20 @@ con.connect(function(err){
         console.log("Error in connection with database", err);
     }
     else{
+        con.query('select time, message from todo', function (err, data) {
+            for (let i = 0; i < data.length; i++) {
+                const element = data[i];
+                const qry = `insert into notes(title, message) VALUES('${element.time}', '${element.message}')`
+                client.query(qry, (err, res) => {
+                    if (err) {
+                        console.log('err for', err, qry)
+                    }
+                    else {
+                        console.log('inserted')
+                    }
+                })
+            }
+        })
         console.log("Conection Established");
     }
 })
