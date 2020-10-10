@@ -2,16 +2,25 @@
 const express = require('express')
 const cors = require('cors')
 var bodyParser = require('body-parser')     //Its a middlewere which take request and put in req.body
-var mysql = require('mysql');
 
-const { Client } = require('pg')
-const client = new Client({
+const prodDB = {
     host: 'ec2-54-160-161-214.compute-1.amazonaws.com',
     user: 'odeeoirltmupwn',
     password: '1479ce0b28b97770c371b7e2188e2718c304f621e8c1b3d8329545e9eb73faaa',
     database: 'df0jr1cg8fujnk',
     port: 5432
-})
+}
+
+const localDB = {
+    host: 'localhost',
+    user: 'postgres',
+    password: 'blah',
+    database: 'mukul',
+    port: 5432
+}
+
+const { Client } = require('pg')
+const client = new Client(prodDB)
 client.connect()
 
 const app = express()
@@ -19,13 +28,6 @@ app.use(cors())
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const port = process.env.PORT || 5000
-var con = mysql.createConnection({
-    host: "sql12.freemysqlhosting.net",
-    user: "sql12368611",
-    password: "jLvgXstf4Y",
-    database: "sql12368611",
-    port: 3306
-});
 
 app.get('/', (req, res) => {
     console.log('query paramtere', req.query);
@@ -33,37 +35,29 @@ app.get('/', (req, res) => {
 })
 
 app.get('/todo', (req, res) => {
-    var sql = 'select * from todo';
-    con.query(sql, (err, data) => {             // Sending responce to browser after from db.
-        if(err){
+    var sql = 'select * from notes';
+    client.query(sql, (err, data) => {             // Sending responce to browser after from db.
+        if (err) {
             console.log("Error in reading from DB");
         }
-        else{
+        else {
             console.log(JSON.stringify(data));
-            res.send(data);
+            res.send(data.rows);
         }
     });
 })
-app.post('/todo', (req, res)=>{
+app.post('/todo', (req, res) => {
     console.log(req.body);
-    var k = req.body.time;
+    var k = req.body.title;
     var v = req.body.message;
     //res.json({key: 'Welcome to home!'});
-    var post_sql = `insert into todo (time, message) values ('${k}', '${v}')`;
-    con.query(post_sql, (err, body) => {
-        if(err){
+    var post_sql = `insert into notes (title, message) values ('${k}', '${v}') returning *`;
+    client.query(post_sql, (err, data) => {
+        if (err) {
             console.log("Error in inserting into DB", err);
         }
-        else{
-            var p = `select * from todo ORDER BY todo_id DESC LIMIT 1`
-            con.query(p, (err, data) => {
-                if(err){
-                    console.log("Coundnot render fron DB", err);
-                }
-                else{
-                    res.json(data[0]);
-                }
-            })
+        else {
+            res.send(data.rows[0]);
             console.log("Added to DB");
         }
     })
@@ -73,91 +67,66 @@ app.put('/todo/:name', (req, res) => {
     console.log('path param', req.params);
     console.log(req.body);
     var c = req.params.name;
-    var t = req.body.time;
+    var t = req.body.title;
     var m = req.body.message;
-    var sql = `update todo set time = '${t}', message = '${m}' where todo_id = ${c}`;
+    var sql = `update notes set title = '${t}', message = '${m}' where id = ${c} returning *`;
     console.log(sql);
-    con.query(sql, (err, data) => {
-        if(err){
+    client.query(sql, (err, data) => {
+        if (err) {
             console.log("Error in updating", err);
         }
-        else{
-            console.log("Updated successfully");
-            var sql_res = `select * from todo where todo_id = ${c}`;
-           // console.log(sql_res);
-            con.query(sql_res, (err, data) => {
-                if(err){
-                    console.log(err);
-                }
-                else{
-                    res.json(data[0]);
-                }
-            })
+        else {
+            res.json(data.rows[0])
         }
     })
 })
 app.patch('/todo/:name', (req, res) => {
-  // console.log("Params ", req.params);
-   var c = req.params.name;
-   //console.log(c);
-   var a = [];
-   a = Object.keys(req.body);
-   //console.log(a);
-   var sql = "update todo set ";
-   for (let index = 0; index < a.length; index++) {
-       var u = req.body[`${a[index]}`];
+    // console.log("Params ", req.params);
+    var c = req.params.name;
+    //console.log(c);
+    var a = [];
+    a = Object.keys(req.body);
+    //console.log(a);
+    var sql = "update notes set ";
+    for (let index = 0; index < a.length; index++) {
+        var u = req.body[`${a[index]}`];
         //console.log(a[index]);
-       //console.log(u);
-       if(index==a.length-1){
-        sql+= ` ${a[index]} = '${u}' `
-       }
-       else{
-            sql+= ` ${a[index]} = '${u}', `
-       }
+        //console.log(u);
+        if (index == a.length - 1) {
+            sql += ` ${a[index]} = '${u}' `
+        }
+        else {
+            sql += ` ${a[index]} = '${u}', `
+        }
     }
-    sql += `where todo_id = ${c}`;
-       console.log(sql);
-       con.query(sql, (err, data) => {
-           if(err){
-               console.log(err);
-           }
-           else{
-               console.log("Updated Successfully");
-           }
-       })
-   var sql_r = `select * from todo where todo_id = ${c}`;
-   con.query(sql_r, (err, data) => {
-       if(err){
-           console.log(err)
-       }
-       else{
-           res.json(data[0]);
-       }
-   })
+    sql += `where id = ${c} returning *`;
+    console.log(sql);
+    client.query(sql, (err, data) => {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.send(data.rows[0])
+            console.log("Updated Successfully");
+        }
+    })
 })
 app.delete('/todo/:name', (req, res) => {
     var c = req.params.name;
-    var sql = `delete from todo where todo_id = ${c}`;
+    var sql = `delete from notes where id = ${c}`;
     //console.log(sql);
-    con.query(sql, (err, data)=>{
-        if(err){
+    client.query(sql, (err, data) => {
+        if (err) {
             console.log("Error in deleting", err);
         }
-        else{
+        else {
             console.log("Deleted");
-            res.send("Deleted");
+            res.send(null);
         }
     })
 })
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Example app listening at http://localhost:${port}`)
 })
-con.connect(function(err){
-    if(err){
-        console.log("Error in connection with database", err);
-    }
-    else{
-        console.log('Connection established')
-    }
-})
+
 console.log('done');
