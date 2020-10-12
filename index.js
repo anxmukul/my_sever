@@ -64,10 +64,16 @@ app.post('/todo', (req, res) => {
 })
 app.post('/user', (req, res) => {
     if(req.body.user_name == ' '){
-        res.send("Invalid Username");
+        res.status(406);
+        res.send({
+            message: "Invalid Username"
+        });
     }
     else if(req.body.password == ' '){
-        res.send("Invalid Password");
+        res.status(406);
+        res.send({
+            message: "Invalid Password"
+        });
     }
     else{
         var n = req.body.user_name;
@@ -102,8 +108,10 @@ app.get('/user', (req, res)=>{
             }       
             else{
                 if(data.rowCount == 0){
-                    console.log(data);
-                    res.send("Invalid Credentials")
+                    res.status(404);
+                    res.send({
+                        message: "Not Found"
+                    });
                 }
                 else{
                     console.log(`Logged in as username = '${n}'`)
