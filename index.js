@@ -20,7 +20,7 @@ const localDB = {
 }
 
 const { Client } = require('pg')
-const client = new Client(prodDB)
+const client = new Client(localDB)
 client.connect()
 
 const app = express()
@@ -61,6 +61,59 @@ app.post('/todo', (req, res) => {
             console.log("Added to DB");
         }
     })
+})
+app.get('/user', (req, res)=> {
+    res.send('<h1>Hello There!</h1><p>Create you account</p>');
+})
+app.post('/user', (req, res) => {
+    if(req.body.user_name == ' '){
+        res.send("Invalid Username");
+    }
+    else if(req.body.password == ' '){
+        res.send("Invalid Password");
+    }
+    else{
+        var n = req.body.user_name;
+        var p = req.body.password;
+        var post_sql = `insert into accounts(user_name, password) values('${n}', '${p}')`;
+        client.query(post_sql, (err, data) => {
+            if(err){
+                console.log("Error while inserting into Database", err);
+                if(err.code == 23506){
+                    res.send("User name exits");
+                }
+                else{
+                    res.send(err);
+                }
+            }
+            else{
+                res.send("Account Created");
+            }
+        })
+    }
+    
+})
+app.post('/user/login', (req, res)=>{
+    console.log(req.body);
+        var n = req.body.user_name;
+        var p = req.body.password;
+        var post_sql = `select * from accounts where user_name = '${n}' and password = '${p}'`;  //Do i need password check?
+        client.query(post_sql, (err, data)=>{
+            if(err){
+                    res.send(err);
+            }       
+            else{
+                if(data.rowCount == 0){
+                    console.log(data);
+                    res.send("Invalid Credentials")
+                }
+                else{
+                    console.log(`Logged in as username = '${n}'`)
+                    res.send(`Welcome ${n}`)
+    
+                }
+            }
+        })
 })
 
 app.put('/todo/:name', (req, res) => {
