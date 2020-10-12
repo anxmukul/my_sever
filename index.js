@@ -72,19 +72,20 @@ app.post('/user', (req, res) => {
     else{
         var n = req.body.user_name;
         var p = req.body.password;
-        var post_sql = `insert into accounts(user_name, password) values('${n}', '${p}')`;
+        var post_sql = `insert into accounts(user_name, password) values('${n}', '${p}') returning *`;
         client.query(post_sql, (err, data) => {
             if(err){
                 console.log("Error while inserting into Database", err);
                 if(err.code == 23506){
-                    res.send("User name exits");
+                    console.log("User not Exits")
+                    res.send(err);
                 }
                 else{
                     res.send(err);
                 }
             }
             else{
-                res.send("Account Created");
+                res.send(data.rows);
             }
         })
     }
