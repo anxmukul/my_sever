@@ -62,9 +62,6 @@ app.post('/todo', (req, res) => {
         }
     })
 })
-app.get('/user', (req, res)=> {
-    res.send('<h1>Hello There!</h1><p>Create you account</p>');
-})
 app.post('/user', (req, res) => {
     if(req.body.user_name == ' '){
         res.send("Invalid Username");
@@ -93,7 +90,7 @@ app.post('/user', (req, res) => {
     }
     
 })
-app.post('/user/login', (req, res)=>{
+app.get('/user', (req, res)=>{
     console.log(req.body);
         var n = req.body.user_name;
         var p = req.body.password;
@@ -109,8 +106,7 @@ app.post('/user/login', (req, res)=>{
                 }
                 else{
                     console.log(`Logged in as username = '${n}'`)
-                    res.send(`Welcome ${n}`)
-    
+                    res.send(data.rows)    
                 }
             }
         })
@@ -134,17 +130,12 @@ app.put('/todo/:name', (req, res) => {
     })
 })
 app.patch('/todo/:name', (req, res) => {
-    // console.log("Params ", req.params);
     var c = req.params.name;
-    //console.log(c);
     var a = [];
     a = Object.keys(req.body);
-    //console.log(a);
     var sql = "update notes set ";
     for (let index = 0; index < a.length; index++) {
         var u = req.body[`${a[index]}`];
-        //console.log(a[index]);
-        //console.log(u);
         if (index == a.length - 1) {
             sql += ` ${a[index]} = '${u}' `
         }
@@ -167,7 +158,6 @@ app.patch('/todo/:name', (req, res) => {
 app.delete('/todo/:name', (req, res) => {
     var c = req.params.name;
     var sql = `delete from notes where id = ${c}`;
-    //console.log(sql);
     client.query(sql, (err, data) => {
         if (err) {
             console.log("Error in deleting", err);
