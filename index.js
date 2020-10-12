@@ -97,10 +97,9 @@ app.post('/user', (req, res) => {
     }
     
 })
-app.get('/user', (req, res)=>{
-    console.log(req.body);
-        var n = req.body.user_name;
-        var p = req.body.password;
+app.get('/user', (req, res)=>{  
+        var n = req.query.user_name;
+        var p = req.query.password;
         var post_sql = `select * from accounts where user_name = '${n}' and password = '${p}'`;  //Do i need password check?
         client.query(post_sql, (err, data)=>{
             if(err){
