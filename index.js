@@ -20,7 +20,7 @@ const localDB = {
 }
 
 const { Client } = require('pg')
-const client = new Client(localDB)
+const client = new Client(prodDB)
 client.connect()
 
 const app = express()
