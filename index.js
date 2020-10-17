@@ -2,6 +2,8 @@
 const express = require('express')
 const cors = require('cors')
 var bodyParser = require('body-parser')     //Its a middlewere which take request and put in req.body
+const jwt = require("jsonwebtoken");
+const config = require("./config");
 
 const prodDB = {
     host: 'ec2-54-160-161-214.compute-1.amazonaws.com',
@@ -20,7 +22,7 @@ const localDB = {
 }
 
 const { Client } = require('pg')
-const client = new Client(prodDB)
+const client = new Client(localDB)
 client.connect()
 
 const app = express()
@@ -29,13 +31,29 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const port = process.env.PORT || 5000
 
+verifyToken = (req, res) => {
+    let token = req.headers["x-access-token"];
+    try {
+        const decoded = jwt.verify(token, config.secret)
+        console.log(decoded);
+        return decoded.id;
+    }
+    catch (err) {
+        return res.status(401).send({
+            message: "Unauthorized!"
+        });
+    }
+};
+
 app.get('/', (req, res) => {
     console.log('query paramtere', req.query);
     res.send('<h1>Hello There!</h1><p>Welcome to My ToDo</p>');           //.send send string;
 })
 
 app.get('/todo', (req, res) => {
-    var sql = 'select * from notes';
+    const userId = verifyToken(req, res);
+    console.log('req id is', req.id)
+    var sql = `select * from notes where user_id=${userId}`;
     client.query(sql, (err, data) => {             // Sending responce to browser after from db.
         if (err) {
             console.log("Error in reading from DB");
@@ -51,73 +69,81 @@ app.post('/todo', (req, res) => {
     var k = req.body.title;
     var v = req.body.message;
     //res.json({key: 'Welcome to home!'});
-    var post_sql = `insert into notes (title, message) values ('${k}', '${v}') returning *`;
+    const userId = verifyToken(req, res);
+    var post_sql = `insert into notes (title, message, user_id) values ('${k}', '${v}', ${userId}) returning *`;
     client.query(post_sql, (err, data) => {
         if (err) {
             console.log("Error in inserting into DB", err);
         }
         else {
+            res.status(201);
             res.send(data.rows[0]);
             console.log("Added to DB");
         }
     })
 })
 app.post('/user', (req, res) => {
-    if(req.body.user_name == ' '){
+    if (req.body.user_name == ' ') {
         res.status(406);
         res.send({
             message: "Invalid Username"
         });
     }
-    else if(req.body.password == ' '){
+    else if (req.body.password == ' ') {
         res.status(406);
         res.send({
             message: "Invalid Password"
         });
     }
-    else{
+    else {
         var n = req.body.user_name;
         var p = req.body.password;
         var post_sql = `insert into accounts(user_name, password) values('${n}', '${p}') returning *`;
         client.query(post_sql, (err, data) => {
-            if(err){
+            if (err) {
                 console.log("Error while inserting into Database", err);
-                if(err.code == 23506){
+                if (err.code == 23506) {
                     console.log("User not Exits")
                     res.send(err);
                 }
-                else{
+                else {
                     res.send(err);
                 }
             }
-            else{
+            else {
                 res.send(data.rows);
             }
         })
     }
-    
+
 })
-app.get('/user', (req, res)=>{  
-        var n = req.query.user_name;
-        var p = req.query.password;
-        var post_sql = `select * from accounts where user_name = '${n}' and password = '${p}'`;  //Do i need password check?
-        client.query(post_sql, (err, data)=>{
-            if(err){
-                    res.send(err);
-            }       
-            else{
-                if(data.rowCount == 0){
-                    res.status(404);
-                    res.send({
-                        message: "Not Found"
-                    });
-                }
-                else{
-                    console.log(`Logged in as username = '${n}'`)
-                    res.send(data.rows)    
-                }
+app.get('/user', (req, res) => {
+    var n = req.query.user_name;
+    var p = req.query.password;
+    var post_sql = `select * from accounts where user_name = '${n}' and password = '${p}'`;  //Do i need password check?
+    client.query(post_sql, (err, data) => {
+        if (err) {
+            res.send(err);
+        }
+        else {
+            if (data.rowCount == 0) {
+                res.status(404);
+                res.send({
+                    message: "Not Found"
+                });
             }
-        })
+            else {
+                console.log(`Logged in as userid = '${data.rows[0].user_id}'`)
+                console.log(data.rows);
+                var token = jwt.sign({ id: data.rows[0].user_id }, config.secret, {
+                    expiresIn: 86400 // 24 hours
+                });
+                let result = data.rows[0];
+                result.accessToken = token;
+                res.send(result)
+            }
+        }
+    })
 })
 
 app.put('/todo/:name', (req, res) => {
